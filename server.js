@@ -5,6 +5,16 @@ var url = require('url');
 var async = require('async'); // https://www.npmjs.com/package/async
 var path = require('path');
 
+if (process.argv.length < 3)
+{
+    console.error("So, your args not fit in needed count");
+    process.exit(1);
+}
+const imagesDir = path.resolve(__dirname, process.argv[2]);
+const siteurl = process.argv[3];
+
+// const siteurl = 'https://ametist-store.ru/catalog/materialy-dlya-mebeli/mebelnye-tkani'
+
 var mkdirSync = function (path) {
   try {
     fs.mkdirSync(path);
@@ -13,11 +23,9 @@ var mkdirSync = function (path) {
   }
 }
 
-const siteurl = 'https://ametist-store.ru/catalog/materialy-dlya-mebeli/mebelnye-tkani'
 
 const target = `${siteurl}/?TEMPLATE=block&set_filter=y&arrFilter_81_498629140=Y&arrFilter_81_1790921346=Y&arrFilter_P2_MAX=24219&arrFilter_P2_MIN=115`;
 
-const imagesDir = path.resolve(__dirname, './images');
 
 mkdirSync(imagesDir);
 
@@ -55,18 +63,18 @@ function loadImages($, destFolder) {
 request(target, function (error, response, html) {
     if (!error) {
         var $ = cheerio.load(html);
-        var items = $('.item>.img>a');
-        //var new_items = items.filter(function () {
-        //    var data = $(this);
-        //    var founded = data.children().find('span');
-        //    return founded !== undefined && founded.hasClass('new');
-        //});
+        const prods = $('.item>.img').has('.new, .hit');
+        if (prods.length == 0)
+        {
+            console.log("no found hit or new products");
+            process.exit(0);
+        }
 
-        var items_pages = items.map(function (i, e) {
-            return $(e).attr('href');
+        var prod_pages = prods.map(function (i, e) {
+            return $(e).find('a').attr('href');
         });
         const links = [];
-        items_pages.map(function (i, e) {
+        prod_pages.map(function (i, e) {
             links.push(url.resolve(siteurl, e));
         });
 
